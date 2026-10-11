@@ -18,11 +18,17 @@ public class MainTeleOp extends OpMode {
 
     @Override
     public void loop() {
+        double speed;
+        if (gamepad1.right_bumper) {
+            speed = 0.4;
+        }
+        else speed = 1.0;
         robot.follower.manual(
-                -gamepad1.left_stick_y,
-                -gamepad1.left_stick_x,
-                -gamepad1.right_stick_x
+            -gamepad1.left_stick_y * speed,
+            -gamepad1.left_stick_x * speed,
+            -gamepad1.right_stick_x * speed
         );
+
         robot.update();
 
         telemetry.addData("Pose", robot.follower.pose());
