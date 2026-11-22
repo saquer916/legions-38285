@@ -6,6 +6,7 @@ import com.qualcomm.robotcore.hardware.HardwareMap;
 
 import org.firstinspires.ftc.teamcode.paths.PoseStorage;
 import org.firstinspires.ftc.teamcode.pedro.Constants;
+import org.firstinspires.ftc.teamcode.subsystems.Shooter;
 import org.firstinspires.ftc.teamcode.subsystems.Subsystem;
 
 import java.util.ArrayList;
@@ -13,6 +14,7 @@ import java.util.List;
 
 public class Robot {
     public final Follower follower;
+    public final Shooter shooter;
 
     private final List<LynxModule> hubs;
     private final List<Subsystem> subsystems = new ArrayList<>();
@@ -24,6 +26,7 @@ public class Robot {
         }
 
         follower = Constants.create(hardwareMap);
+        shooter = register(new Shooter(hardwareMap, follower));
     }
 
     private <T extends Subsystem> T register(T subsystem) {

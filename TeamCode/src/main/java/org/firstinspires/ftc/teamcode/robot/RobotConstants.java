@@ -13,7 +13,13 @@ public final class RobotConstants {
     public static final String rightFront = "rightFront";
     public static final String leftFront = "leftFront";
 
-    
+    // Shooter
+    public static final String flywheelLeft = "flywheelLeft";
+    public static final String flywheelRight = "flywheelRight";
+    public static final String turretServo = "turretServo";
+    // Turret encoder, read through this motor port's encoder input
+    public static final String turretEncoder = "turretEncoder";
+
     private RobotConstants() {
     }
 }
