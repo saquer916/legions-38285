@@ -29,6 +29,23 @@ public final class FieldConstants {
         return pivot.withY(pivot.y() + (farCellUp ? 1 : -1) * RAISED_CELL_OFFSET);
     }
 
+    // Robot footprint from the CAD (V1 drivetrain, A -264..143 mm, outer plates W +-190 mm).
+    public static double ROBOT_CENTER_TO_BACK = 8.0;
+    public static double ROBOT_CENTER_TO_SIDE = 7.5;
+
+    // Default start / pose-reset spot. Red: back against the red wall, left side against the far wall
+    // (Figure 9-2: that corner has no GARDEN, LOADING ZONE or FLOWER). Blue is the 180 deg rotation,
+    // matching the field's symmetry. TODO: move to your legal starting position once the rules are checked.
+    public static Pose redStart = new Pose(ROBOT_CENTER_TO_BACK, FIELD_SIZE - ROBOT_CENTER_TO_SIDE, 0);
+
+    public static Pose startPose(Alliance alliance) {
+        return alliance == Alliance.RED ? redStart : rotate180(redStart);
+    }
+
+    public static Pose rotate180(Pose pose) {
+        return new Pose(FIELD_SIZE - pose.x(), FIELD_SIZE - pose.y(), pose.heading() + Math.PI);
+    }
+
     private FieldConstants() {
     }
 }

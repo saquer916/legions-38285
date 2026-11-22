@@ -143,6 +143,20 @@ public class Shooter implements Subsystem {
         return distance;
     }
 
+    // Whether the turret could face the raised CELL from this pose (no lead), without waiting for update().
+    public boolean canReach(Pose pose) {
+        Pose cell = FieldConstants.raisedCell(alliance, farCellUp);
+        double desired = AngleUnit.normalizeRadians(
+                Math.atan2(cell.y() - pose.y(), cell.x() - pose.x()) - pose.heading() - TURRET_ZERO_HEADING + aimTrim);
+        return desired >= Turret.MIN_ANGLE && desired <= Turret.MAX_ANGLE;
+    }
+
+    // Robot heading that puts the raised CELL straight down the turret's zero.
+    public double facingHeading(Pose pose) {
+        Pose cell = FieldConstants.raisedCell(alliance, farCellUp);
+        return Math.atan2(cell.y() - pose.y(), cell.x() - pose.x()) - TURRET_ZERO_HEADING;
+    }
+
     // False when the CELL is behind the turret's soft limits; turn the robot.
     public boolean isReachable() {
         return reachable;
