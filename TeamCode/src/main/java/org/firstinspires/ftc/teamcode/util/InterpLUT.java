@@ -21,4 +21,9 @@ public class InterpLUT {
         double t = (input - lower.getKey()) / (upper.getKey() - lower.getKey());
         return lower.getValue() + t * (upper.getValue() - lower.getValue());
     }
+
+    // Largest input in the table; above it get() clamps.
+    public double maxInput() {
+        return points.lastKey();
+    }
 }

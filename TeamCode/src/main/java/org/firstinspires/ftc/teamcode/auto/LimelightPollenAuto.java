@@ -20,8 +20,9 @@ import org.firstinspires.ftc.teamcode.vision.BallDetection;
 @Autonomous(name = "Limelight Pollen", group = "Competition", preselectTeleOp = "Main TeleOp")
 public class LimelightPollenAuto extends OpMode {
     // Limelight lens relative to the robot centre in the robot frame (in): +forward toward the intake, +left.
-    public static double CAMERA_FORWARD = 8.3;
-    public static double CAMERA_LEFT = 2.4;
+    // Lens of the Limelight on its mount (CAD: A 166, W 70.5, Z 218.5 mm; robot centre A -60.5).
+    public static double CAMERA_FORWARD = 8.9;
+    public static double CAMERA_LEFT = 2.8;
     // Robot centre to the intake roller, and how far past the ball the roller should go.
     public static double INTAKE_REACH = 8.4;
     public static double OVERDRIVE = 3.0;
@@ -45,8 +46,11 @@ public class LimelightPollenAuto extends OpMode {
     public static double ARRIVE_TOLERANCE = 1.5;
     public static int BALLS_PER_TRIP = 3;
 
-    public static double SPIN_UP_TIMEOUT = 2.5;
-    public static double FEED_TIME = 2.5;
+    // The yaw servo needs ~4 s for a 130 deg swing; feeding earlier throws the ball off target (simulation).
+    public static double SPIN_UP_TIMEOUT = 5.0;
+    // Feeding ends once no ball has gone through for EMPTY_TIME, or after FEED_TIME at the latest.
+    public static double EMPTY_TIME = 2.0;
+    public static double FEED_TIME = 6.0;
     public static double LAST_PICKUP_TIME = 21;
     public static double STOP_TIME = 28;
 
@@ -82,6 +86,7 @@ public class LimelightPollenAuto extends OpMode {
         telemetry.addData("Raised CELL (A far / Y audience)", robot.shooter.isFarCellUp() ? "far" : "audience");
         telemetry.addData("Place robot at", FieldConstants.startPose(robot.shooter.getAlliance()));
         telemetry.addData("Limelight", balls.isCameraConnected() ? "connected" : "NOT CONNECTED");
+        if (!robot.gate.isConnected()) telemetry.addData("Gate servo", "NOT IN CONFIG");
     }
 
     @Override
@@ -107,13 +112,13 @@ public class LimelightPollenAuto extends OpMode {
         switch (step) {
             case AIM:
                 if (robot.shooter.isReady() || timer.seconds() > SPIN_UP_TIMEOUT) {
-                    robot.intake.setState(Intake.State.IN);
-                    robot.transfer.setState(Transfer.State.FEED);
+                    robot.feeder.feed();
                     next(Step.FEED);
                 }
                 break;
             case FEED:
-                if (timer.seconds() > FEED_TIME) {
+                robot.feeder.feed();
+                if (robot.feeder.secondsSinceShot() > EMPTY_TIME || timer.seconds() > FEED_TIME) {
                     stopMechanisms();
                     if (matchTimer.seconds() > LAST_PICKUP_TIME) {
                         robot.follower.hold(pose);
@@ -212,8 +217,7 @@ public class LimelightPollenAuto extends OpMode {
     }
 
     private void stopMechanisms() {
-        robot.intake.setState(Intake.State.OFF);
-        robot.transfer.setState(Transfer.State.OFF);
+        robot.feeder.stop();
         robot.shooter.setSpinning(false);
     }
 

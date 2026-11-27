@@ -7,8 +7,6 @@ import com.qualcomm.robotcore.util.ElapsedTime;
 
 import org.firstinspires.ftc.teamcode.paths.PoseStorage;
 import org.firstinspires.ftc.teamcode.robot.Robot;
-import org.firstinspires.ftc.teamcode.subsystems.Intake;
-import org.firstinspires.ftc.teamcode.subsystems.Transfer;
 import org.firstinspires.ftc.teamcode.util.Alliance;
 import org.firstinspires.ftc.teamcode.util.FieldConstants;
 
@@ -16,8 +14,11 @@ import org.firstinspires.ftc.teamcode.util.FieldConstants;
 // forward out of the corner. Hands pose and alliance to TeleOp.
 @Autonomous(name = "Shoot Preload", group = "Competition", preselectTeleOp = "Main TeleOp")
 public class ShootPreloadAuto extends OpMode {
-    public static double SPIN_UP_TIMEOUT = 3.0;
-    public static double FEED_TIME = 3.0;
+    // The yaw servo needs ~4 s for a 130 deg swing; feeding earlier throws the ball off target (simulation).
+    public static double SPIN_UP_TIMEOUT = 5.0;
+    // Feeding ends once no ball has gone through for EMPTY_TIME, or after FEED_TIME at the latest.
+    public static double EMPTY_TIME = 2.0;
+    public static double FEED_TIME = 6.0;
     public static double LEAVE_DISTANCE = 24;
     public static double LEAVE_TIMEOUT = 3.0;
     public static double LEAVE_TOLERANCE = 2.0;
@@ -44,6 +45,7 @@ public class ShootPreloadAuto extends OpMode {
         telemetry.addData("Alliance (X blue / B red)", robot.shooter.getAlliance());
         telemetry.addData("Raised CELL (A far / Y audience)", robot.shooter.isFarCellUp() ? "far" : "audience");
         telemetry.addData("Place robot at", FieldConstants.startPose(robot.shooter.getAlliance()));
+        if (!robot.gate.isConnected()) telemetry.addData("Gate servo", "NOT IN CONFIG");
     }
 
     @Override
@@ -69,16 +71,15 @@ public class ShootPreloadAuto extends OpMode {
         switch (step) {
             case SPIN_UP:
                 if (robot.shooter.isReady() || timer.seconds() > SPIN_UP_TIMEOUT) {
-                    robot.intake.setState(Intake.State.IN);
-                    robot.transfer.setState(Transfer.State.FEED);
+                    robot.feeder.feed();
                     step = Step.FEED;
                     timer.reset();
                 }
                 break;
             case FEED:
-                if (timer.seconds() > FEED_TIME) {
-                    robot.intake.setState(Intake.State.OFF);
-                    robot.transfer.setState(Transfer.State.OFF);
+                robot.feeder.feed();
+                if (robot.feeder.secondsSinceShot() > EMPTY_TIME || timer.seconds() > FEED_TIME) {
+                    robot.feeder.stop();
                     robot.shooter.setSpinning(false);
                     robot.follower.hold(leavePose);
                     step = Step.LEAVE;

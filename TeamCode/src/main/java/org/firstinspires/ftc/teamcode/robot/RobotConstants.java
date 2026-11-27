@@ -21,6 +21,7 @@ public final class RobotConstants {
     public static final String flywheelLeft = "flywheelLeft";
     public static final String flywheelRight = "flywheelRight";
     public static final String turretServo = "turretServo";
+    public static final String gate = "gate";
     // Turret encoder, read through this motor port's encoder input
     public static final String turretEncoder = "turretEncoder";
 

@@ -12,10 +12,12 @@ public class Transfer implements Subsystem {
     // STAGE carries balls up to the shooter without forcing them into a stopped flywheel; the tubing slips.
     public static double STAGE_POWER = 0.5;
     public static double FEED_POWER = 1.0;
+    // Feeding a shot: slow enough that the Feeder can stop the next ball before it reaches the flywheel.
+    public static double METER_POWER = 0.3;
     public static double REVERSE_POWER = -0.6;
     public static boolean REVERSED = false;
 
-    public enum State { OFF, STAGE, FEED, REVERSE }
+    public enum State { OFF, STAGE, FEED, METER, REVERSE }
 
     private final DcMotorEx motor;
     private State state = State.OFF;
@@ -36,6 +38,9 @@ public class Transfer implements Subsystem {
                 break;
             case FEED:
                 motor.setPower(FEED_POWER);
+                break;
+            case METER:
+                motor.setPower(METER_POWER);
                 break;
             case REVERSE:
                 motor.setPower(REVERSE_POWER);

@@ -10,11 +10,11 @@ import com.qualcomm.robotcore.util.Range;
 
 import org.firstinspires.ftc.teamcode.robot.RobotConstants;
 
-// Two REV HD Hex motors (UltraPlanetary) on one flywheel shaft. Velocity loop on the left
-// motor's encoder, same power to both so they never fight each other.
+// goBILDA underhand shooter: two 5203 Yellow Jackets (1:1, 6000 rpm) belted 20T:20T to one shaft carrying a
+// 72 mm 3601 Rhino wheel. Velocity loop on the left motor's encoder, same power to both so they never fight.
 public class Flywheel implements Subsystem {
     public static double MOTOR_TICKS_PER_REV = 28;
-    // Motor revolutions per flywheel revolution. TODO: set to the UltraPlanetary cartridges on the robot.
+    // Motor revolutions per flywheel revolution (20T motor pulleys to 20T shaft pulleys).
     public static double GEAR_RATIO = 1.0;
 
     // power = (kS + kV * rpm) * 12V / battery + kP * error

@@ -17,7 +17,7 @@ public class BallDetection implements Subsystem {
 
     private static final int MAX_STALENESS_MS = 120;
     private static final double MIN_CONFIDENCE = 0.5;
-    private static final double CAMERA_HEIGHT = 9.0; // inches
+    private static final double CAMERA_HEIGHT = 8.6; // inches (lens at Z 218.5 mm in CAD)
     private static final double CAMERA_TILT = 21.0; // degrees
     private static final double POLLEN_CENTER_HEIGHT = 1.4; // inches
     private static final double NECTAR_CENTER_HEIGHT = 1.8; // inches

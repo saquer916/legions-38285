@@ -40,6 +40,7 @@ public class MainTeleOp extends OpMode {
         if (gamepad1.x) robot.shooter.setAlliance(Alliance.BLUE);
         if (gamepad1.b) robot.shooter.setAlliance(Alliance.RED);
         telemetry.addData("Alliance (X blue / B red)", robot.shooter.getAlliance());
+        if (!robot.gate.isConnected()) telemetry.addData("Gate servo", "NOT IN CONFIG");
         telemetry.addData("Start pose", poseFromAuto ? PoseStorage.currentPose + " (from auto)"
                 : FieldConstants.startPose(robot.shooter.getAlliance()) + " (place robot in the start corner)");
     }
@@ -78,16 +79,15 @@ public class MainTeleOp extends OpMode {
         boolean shooting = gamepad1.right_trigger > 0.5;
         boolean intaking = gamepad1.left_trigger > 0.5;
         if (shooting) shooter.setSpinning(true);
-        // Once a burst starts keep feeding: each ball dips the flywheel speed, which would stutter the feed.
+        // Once a burst starts keep it going; the Feeder holds each next ball until the flywheel recovers and the turret
+        // is back on target.
         feeding = shooting && (feeding || shooter.isReady());
 
         if (gamepad1.left_bumper) {
             robot.intake.setState(Intake.State.REVERSE);
             robot.transfer.setState(Transfer.State.REVERSE);
         } else if (feeding) {
-            // Intake keeps pushing the stack; the last stretch into the turret relies on it.
-            robot.intake.setState(Intake.State.IN);
-            robot.transfer.setState(Transfer.State.FEED);
+            robot.feeder.feed();
         } else if (intaking) {
             robot.intake.setState(Intake.State.IN);
             robot.transfer.setState(Transfer.State.STAGE);
@@ -100,7 +100,9 @@ public class MainTeleOp extends OpMode {
         robot.update();
 
         telemetry.addData("Pose", robot.follower.pose());
-        telemetry.addData("Shooter", shooter.isReady() ? "READY" : shooter.isReachable() ? "aiming" : "TURN ROBOT");
+        telemetry.addData("Shooter", shooter.isReady() ? "READY" : !shooter.isReachable() ? "TURN ROBOT"
+                : !shooter.isInRange() ? "TOO FAR" : "aiming");
+        if (feeding) telemetry.addData("Feeder", robot.feeder.isWaiting() ? "holding for flywheel / aim" : "feeding");
         telemetry.addData("Raised CELL (A to flip)", shooter.isFarCellUp() ? "far" : "audience");
         telemetry.addData("CELL distance (in)", "%.1f", shooter.getDistance());
         telemetry.addData("Flywheel rpm", "%.0f / %.0f", shooter.flywheel.getRpm(), shooter.flywheel.getTargetRpm());
