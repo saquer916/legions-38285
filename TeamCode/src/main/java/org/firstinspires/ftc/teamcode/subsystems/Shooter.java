@@ -20,14 +20,20 @@ public class Shooter implements Subsystem {
     // Direction the shooter fires at turret angle 0, relative to robot forward. PI = out the back.
     public static double TURRET_ZERO_HEADING = Math.PI;
 
-    // Turret axis to raised CELL distance (in) -> flywheel RPM. TODO: starting guesses, tune on the field.
+    // Turret axis to raised CELL distance (in) -> flywheel RPM for the goBILDA shooter (72 mm wheel, hood ~78 deg).
+    // From the simulation's shot map; follows the high arc (straight under the CELL a ~2700 rpm lob also scores). Verify on the field.
     public static InterpLUT RPM_BY_DISTANCE = new InterpLUT()
-            .add(24, 2400)
-            .add(48, 2800)
-            .add(72, 3200)
-            .add(96, 3600)
-            .add(120, 4000)
-            .add(144, 4400);
+            .add(24, 3100)
+            .add(36, 3180)
+            .add(42, 3370)
+            .add(48, 3490)
+            .add(54, 3640)
+            .add(60, 3790)
+            .add(66, 3940)
+            .add(72, 4090)
+            .add(78, 4225)
+            .add(84, 4380)
+            .add(90, 4480);
 
     // Distance (in) -> ball flight time (s), used to lead the shot while driving. TODO: measure.
     public static InterpLUT FLIGHT_TIME_BY_DISTANCE = new InterpLUT()
@@ -49,6 +55,7 @@ public class Shooter implements Subsystem {
     private double rpmTrim = 0;
     private double distance = 0;
     private boolean reachable = false;
+    private boolean inRange = false;
 
     public Shooter(HardwareMap hardwareMap, Follower follower) {
         this.follower = follower;
@@ -82,6 +89,8 @@ public class Shooter implements Subsystem {
 
         double desired = AngleUnit.normalizeRadians(Math.atan2(dy, dx) - heading - TURRET_ZERO_HEADING + aimTrim);
         reachable = desired >= Turret.MIN_ANGLE && desired <= Turret.MAX_ANGLE;
+        // Past the end of the RPM table the speed clamps and balls fall short.
+        inRange = distance <= RPM_BY_DISTANCE.maxInput();
         turret.setTarget(desired);
         // Counter-rotate against the robot's own turning.
         turret.setFeedforwardRate(-velocity.omega);
@@ -143,12 +152,36 @@ public class Shooter implements Subsystem {
         return distance;
     }
 
+    // Whether the turret could face the raised CELL from this pose (no lead), without waiting for update().
+    public boolean canReach(Pose pose) {
+        Pose cell = FieldConstants.raisedCell(alliance, farCellUp);
+        double desired = AngleUnit.normalizeRadians(
+                Math.atan2(cell.y() - pose.y(), cell.x() - pose.x()) - pose.heading() - TURRET_ZERO_HEADING + aimTrim);
+        return desired >= Turret.MIN_ANGLE && desired <= Turret.MAX_ANGLE;
+    }
+
+    // Robot heading that puts the raised CELL straight down the turret's zero.
+    public double facingHeading(Pose pose) {
+        Pose cell = FieldConstants.raisedCell(alliance, farCellUp);
+        return Math.atan2(cell.y() - pose.y(), cell.x() - pose.x()) - TURRET_ZERO_HEADING;
+    }
+
     // False when the CELL is behind the turret's soft limits; turn the robot.
     public boolean isReachable() {
         return reachable;
     }
 
+    // False when the CELL is farther than the RPM table covers; drive closer.
+    public boolean isInRange() {
+        return inRange;
+    }
+
+    // Turret on the CELL (flywheel not checked).
+    public boolean isAimed() {
+        return reachable && turret.onTarget();
+    }
+
     public boolean isReady() {
-        return spinning && reachable && flywheel.atSpeed() && turret.onTarget();
+        return spinning && inRange && flywheel.atSpeed() && isAimed();
     }
 }
